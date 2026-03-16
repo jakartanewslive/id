@@ -1,35 +1,40 @@
 <?php
 
-if(isset($_POST['domains'])){
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-$domains = explode("\n", $_POST['domains']);
+    $domains = explode("\n", $_POST['domains']);
 
-echo "<h2>Hasil Cek</h2>";
+    echo "<h2>Hasil Cek Domain</h2>";
 
-foreach($domains as $domain){
+    foreach ($domains as $domain) {
 
-$domain = trim($domain);
+        $domain = trim($domain);
 
-if($domain == "") continue;
+        if ($domain == "") continue;
 
-$url = "https://trustpositif.komdigi.go.id/welcome?csrf_token=dc276365ed8a6432d6b6b340a708e70c&recaptcha_token=&domains=".$domain;
+        $url = "https://trustpositif.komdigi.go.id/welcome?domains=".$domain;
 
-$data = file_get_contents($url);
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
 
-if(stripos($data,"Tidak Ada") !== false){
+        $data = curl_exec($ch);
+        curl_close($ch);
 
-$status = "AMAN";
+        if (!$data) {
+            $status = "ERROR CEK";
+        }
+        elseif (stripos($data, "Tidak Ada") !== false) {
+            $status = "AMAN";
+        }
+        else {
+            $status = "TERBLOKIR / INTERNET POSITIF";
+        }
 
-}else{
-
-$status = "KENA INTERNET POSITIF";
+        echo "<p>$domain : <b>$status</b></p>";
+    }
 
 }
-
-echo "<p>$domain : <b>$status</b></p>";
-
-}
-
-}
-
 ?>
